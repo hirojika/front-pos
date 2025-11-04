@@ -1,5 +1,17 @@
 import { createApp } from 'vue'
-import './style.css'
+import { createPinia } from 'pinia'
 import App from './App.vue'
+import router from './router'
+import './style.css'
+import { useAuthStore } from './store/auth'
 
-createApp(App).mount('#app')
+const app = createApp(App)
+
+app.use(createPinia())
+app.use(router)
+
+// Verificar autenticación al iniciar
+const authStore = useAuthStore()
+authStore.checkAuth()
+
+app.mount('#app')
