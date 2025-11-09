@@ -1,0 +1,32 @@
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/OrderSidebar.vue', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ProductCard.vue', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/store/orders.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/style.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tsconfig.app.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'vite.config.ts', LF will be replaced by CRLF the next time Git touches it
+M	.gitignore
+D	src/assets/vue.svg
+M	src/components/Header.vue
+M	src/components/Modal.vue
+M	src/components/OrderSidebar.vue
+M	src/components/ProductCard.vue
+M	src/components/SaleDetailModal.vue
+M	src/components/Sidebar.vue
+M	src/layouts/MainLayout.vue
+M	src/main.ts
+M	src/router/index.ts
+M	src/store/auth.ts
+M	src/store/inventory.ts
+M	src/store/orders.ts
+M	src/store/products.ts
+M	src/store/sales.ts
+M	src/style.css
+M	src/views/BoletasView.vue
+M	src/views/DashboardView.vue
+M	src/views/IngredientesView.vue
+M	src/views/LoginView.vue
+M	src/views/POSView.vue
+M	tsconfig.app.json
+M	vite.config.ts

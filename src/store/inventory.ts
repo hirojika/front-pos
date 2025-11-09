@@ -1,161 +1,128 @@
+// src/store/inventory.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import type { Id, Unidad, MateriaPrima, TipoIngrediente } from '@/types';
 
-export interface Ingredient {
-  id: string;
-  name: string;
-  description: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  price: number;
-  status: 'En Stock' | 'Bajo Stock' | 'No queda Stock' | 'Stock estancado';
-  image?: string;
-}
-
-export interface StockAlert {
-  id: string;
-  ingredient: string;
-  description: string;
-  quantity: number;
-  type: 'Bajo Stock' | 'No queda Stock' | 'Stock estancado';
-}
+const uid = () => Date.now() + Math.floor(Math.random() * 1e5);
 
 export const useInventoryStore = defineStore('inventory', () => {
-  const ingredients = ref<Ingredient[]>([
-    {
-      id: '1',
-      name: 'Helado de Chocolate',
-      description: 'Helado sabor chocolate',
-      productId: '67869052',
-      productName: 'Helado de Chocolate',
-      quantity: 40,
-      price: 3000,
-      status: 'En Stock',
-    },
-    {
-      id: '2',
-      name: 'Chispitas de Arcoiris',
-      description: 'Chispitas de colores para decorar',
-      productId: '68970163',
-      productName: 'Chispitas de Arcoiris',
-      quantity: 40,
-      price: 4000,
-      status: 'En Stock',
-    },
-    {
-      id: '3',
-      name: 'Salsa de Frutilla',
-      description: 'Salsa dulce de frutilla',
-      productId: '66758941',
-      productName: 'Salsa de Frutilla',
-      quantity: 50,
-      price: 2000,
-      status: 'En Stock',
-    },
-    {
-      id: '4',
-      name: 'Frambuesas',
-      description: 'Frambuesas frescas',
-      productId: '67869052',
-      productName: 'Frambuesas',
-      quantity: 40,
-      price: 3000,
-      status: 'En Stock',
-    },
-    {
-      id: '5',
-      name: 'Dulces de Gomita',
-      description: 'Gomitas de colores',
-      productId: '68970163',
-      productName: 'Dulces de Gomita',
-      quantity: 40,
-      price: 4000,
-      status: 'En Stock',
-    },
-    {
-      id: '6',
-      name: 'Crema Chantilly',
-      description: 'Crema batida para decorar',
-      productId: '66758941',
-      productName: 'Crema Chantilly',
-      quantity: 50,
-      price: 2000,
-      status: 'En Stock',
-    },
-    {
-      id: '7',
-      name: 'Agua Mineral',
-      description: 'Agua mineral natural',
-      productId: '67869052',
-      productName: 'Agua Mineral',
-      quantity: 40,
-      price: 3000,
-      status: 'En Stock',
-    },
-  ]);
+  /** Materias primas del inventario */
+  const materias = ref<MateriaPrima[]>([]);
 
-  const stockAlerts = ref<StockAlert[]>([
-    {
-      id: 'alert-1',
-      ingredient: 'Bajo Stock',
-      description: 'Queda bajo Stock del producto 67869052 (Helado de Chocolate) ¡Debes reponer el producto!',
-      quantity: 5,
-      type: 'Bajo Stock',
-    },
-    {
-      id: 'alert-2',
-      ingredient: 'No queda Stock',
-      description: 'No queda Stock del producto Producto 67869052 (Helado de Chocolate) ¡Debes reponer el producto con urgencia!',
-      quantity: 0,
-      type: 'No queda Stock',
-    },
-    {
-      id: 'alert-3',
-      ingredient: 'Stock estancado',
-      description: 'El Stock del producto Producto 67869052 (Helado de Chocolate) esta estancado ¡Revisa la fecha de vencimiento!',
-      quantity: 10,
-      type: 'Stock estancado',
-    },
-  ]);
+  /** texto de búsqueda en la grilla */
+  const buscar = ref<string>('');
 
-  const addIngredient = (ingredient: Ingredient) => {
-    ingredients.value.push(ingredient);
-  };
+  /** lista filtrada por búsqueda */
+  const lista = computed(() => {
+    const q = buscar.value.trim().toLowerCase();
+    if (!q) return materias.value;
+    return materias.value.filter(
+      (m) =>
+        m.nombre.toLowerCase().includes(q) ||
+        (m.descripcion ?? '').toLowerCase().includes(q)
+    );
+  });
 
-  const updateIngredient = (id: string, updates: Partial<Ingredient>) => {
-    const index = ingredients.value.findIndex(i => i.id === id);
-    if (index > -1) {
-      ingredients.value[index] = { ...ingredients.value[index], ...updates };
-    }
-  };
+  function setBuscar(q: string) {
+    buscar.value = q;
+  }
 
-  const deleteIngredient = (id: string) => {
-    const index = ingredients.value.findIndex(i => i.id === id);
-    if (index > -1) {
-      ingredients.value.splice(index, 1);
-    }
-  };
+  /** Crear una materia prima */
+  function crear(data: {
+    nombre: string;
+    unidad_medida: Unidad;
+    stock_disponible: number;
+    descripcion?: string;
+    categoria?: string;
+    tipo_ingrediente?: TipoIngrediente | undefined;
+  }): MateriaPrima {
+    const m: MateriaPrima = {
+      id: uid(),
+      nombre: data.nombre,
+      unidad_medida: data.unidad_medida,
+      stock_disponible: data.stock_disponible,
+      descripcion: data.descripcion ?? '',
+      categoria: data.categoria,
+      tipo_ingrediente: data.tipo_ingrediente,
+    };
+    materias.value.unshift(m);
+    return m;
+  }
 
-  const deleteAlert = (id: string) => {
-    const index = stockAlerts.value.findIndex(a => a.id === id);
-    if (index > -1) {
-      stockAlerts.value.splice(index, 1);
-    }
-  };
+  /** Actualizar una materia prima */
+  function actualizar(m: MateriaPrima) {
+    const ix = materias.value.findIndex((x) => x.id === m.id);
+    if (ix >= 0) materias.value[ix] = { ...m };
+  }
 
-  const getIngredients = computed(() => ingredients.value);
-  const getAlerts = computed(() => stockAlerts.value);
+  /** Eliminar una materia prima */
+  function eliminar(id: Id) {
+    materias.value = materias.value.filter((m) => m.id !== id);
+  }
+
+  /** Obtener materia prima por ID */
+  function getMateriaById(id: Id): MateriaPrima | undefined {
+    return materias.value.find((m) => m.id === id);
+  }
+
+  /** Semilla de ejemplo para no partir en blanco */
+  function seed() {
+    if (materias.value.length) return;
+    crear({
+      nombre: 'Helado vainilla',
+      unidad_medida: 'g',
+      stock_disponible: 8000,
+      tipo_ingrediente: 'helado',
+      descripcion: 'Base láctea',
+    });
+    crear({
+      nombre: 'Helado chocolate',
+      unidad_medida: 'g',
+      stock_disponible: 8000,
+      tipo_ingrediente: 'helado',
+    });
+    crear({
+      nombre: 'Salsa frutilla',
+      unidad_medida: 'ml',
+      stock_disponible: 4000,
+      tipo_ingrediente: 'salsa',
+    });
+    crear({
+      nombre: 'Manjar',
+      unidad_medida: 'ml',
+      stock_disponible: 4000,
+      tipo_ingrediente: 'salsa',
+    });
+    crear({
+      nombre: 'Chispitas de Arcoiris',
+      unidad_medida: 'g',
+      stock_disponible: 500,
+      descripcion: 'Chispitas de colores para decorar',
+      categoria: 'decorativos',
+    });
+    crear({
+      nombre: 'Frambuesas',
+      unidad_medida: 'g',
+      stock_disponible: 1000,
+      tipo_ingrediente: 'fruta',
+    });
+    crear({
+      nombre: 'Crema Chantilly',
+      unidad_medida: 'g',
+      stock_disponible: 2000,
+      tipo_ingrediente: 'crema',
+    });
+  }
+  seed();
 
   return {
-    ingredients,
-    stockAlerts,
-    addIngredient,
-    updateIngredient,
-    deleteIngredient,
-    deleteAlert,
-    getIngredients,
-    getAlerts,
+    materias,
+    buscar,
+    lista,
+    setBuscar,
+    crear,
+    actualizar,
+    eliminar,
+    getMateriaById,
   };
 });
-

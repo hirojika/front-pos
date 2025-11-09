@@ -1,42 +1,22 @@
 <template>
-  <div class="min-h-screen bg-white flex">
+  <div class="min-h-screen h-screen bg-gray-70 flex overflow-hidden">
     <!-- Sección izquierda - Logo y branding -->
-    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-100 to-yellow-100 items-center justify-center p-8">
-      <div class="text-center">
-        <div class="relative mb-8">
-          <!-- Logo circular con helados -->
-          <div class="w-64 h-64 mx-auto bg-gradient-to-br from-orange-200 to-yellow-200 rounded-full flex items-center justify-center shadow-lg">
-            <div class="text-center relative">
-              <!-- Cono de helado -->
-              <div class="mb-4">
-                <div class="w-24 h-24 mx-auto relative">
-                  <!-- Bolita rosa -->
-                  <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-pink-300 rounded-full"></div>
-                  <!-- Bolita verde -->
-                  <div class="absolute top-4 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-green-300 rounded-full"></div>
-                  <!-- Bolita azul -->
-                  <div class="absolute top-8 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-blue-300 rounded-full"></div>
-                  <!-- Cono -->
-                  <div class="absolute top-16 left-1/2 transform -translate-x-1/2 w-12 h-16 bg-amber-200 rounded-b-full"></div>
-                </div>
-              </div>
-              <!-- Banner con texto -->
-              <div class="bg-white px-6 py-3 rounded-lg shadow-md">
-                <h1 class="text-4xl font-handwritten text-black mb-1">Donde la Lore</h1>
-                <p class="text-sm text-gray-700 font-sans">Helados Artesanales</p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="hidden lg:flex lg:w-3/4 bg-linear-to-br from-orange-100 to-yellow-100 items-center justify-center outline-2 outline-gray-500 h-full">
+      <div class="text-center w-full h-full flex items-center justify-center  ">
+        <img
+          src="@/assets/loginPic.webp"
+          alt="Logo Donde la Lore"
+          class="object-fill w-full h-full mx-auto"
+        />
       </div>
     </div>
 
     <!-- Sección derecha - Formulario de login -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-4" style="height:100vh;">
       <div class="w-full max-w-md">
-        <h2 class="text-3xl font-bold text-gray-900 mb-8">Bienvenido a Donde la Lore</h2>
-        
-        <form @submit.prevent="handleLogin" class="space-y-6">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Bienvenido a Donde la Lore</h2>
+
+        <form @submit.prevent="handleLogin" class="space-y-5">
           <!-- Campo Usuario -->
           <div>
             <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
@@ -83,9 +63,13 @@
 
           <!-- Link Olvidaste contraseña -->
           <div class="text-right">
-            <a href="#" class="text-sm text-primary hover:underline">
+            <button
+              type="button"
+              @click="showForgotPasswordModal = true"
+              class="text-sm text-primary hover:underline"
+            >
               ¿Olvidaste tu Contraseña?
-            </a>
+            </button>
           </div>
 
           <!-- Botón Login -->
@@ -103,6 +87,12 @@
         </form>
       </div>
     </div>
+
+    <!-- Modal de Recuperación de Contraseña -->
+    <ForgotPasswordModal
+      :is-open="showForgotPasswordModal"
+      @update:isOpen="showForgotPasswordModal = $event"
+    />
   </div>
 </template>
 
@@ -110,6 +100,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store/auth';
+import ForgotPasswordModal from '../components/ForgotPasswordModal.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -117,6 +108,7 @@ const authStore = useAuthStore();
 const username = ref('');
 const password = ref('');
 const error = ref('');
+const showForgotPasswordModal = ref(false);
 
 const handleLogin = () => {
   error.value = '';

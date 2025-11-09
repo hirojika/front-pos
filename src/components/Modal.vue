@@ -3,7 +3,7 @@
     <Transition name="modal">
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm"
         @click.self="close"
       >
         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -21,20 +21,22 @@
           <div class="p-6">
             <slot />
           </div>
-          <div v-if="showFooter" class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+          <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4">
             <slot name="footer">
-              <button
-                @click="close"
-                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                @click="$emit('confirm')"
-                class="px-4 py-2 bg-[#FF69B4] text-white rounded-lg hover:bg-[#FF1493] transition-colors"
-              >
-                Confirmar
-              </button>
+              <div v-if="showFooter" class="flex justify-end gap-3">
+                <button
+                  @click="close"
+                  class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  @click="$emit('confirm')"
+                  class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+                >
+                  Confirmar
+                </button>
+              </div>
             </slot>
           </div>
         </div>
@@ -44,9 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
-
-const props = defineProps<{
+defineProps<{
   isOpen: boolean;
   title: string;
   showFooter?: boolean;

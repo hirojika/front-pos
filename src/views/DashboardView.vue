@@ -2,21 +2,32 @@
   <div>
     <Header title="Dashboard del Administrador" />
     <main class="p-6">
-      <div class="mb-6 flex justify-end gap-2">
-        <button
-          v-for="period in timePeriods"
-          :key="period"
-          @click="selectedPeriod = period"
-          :class="[
-            'px-4 py-2 rounded-lg font-medium transition-colors',
-            selectedPeriod === period
-              ? 'bg-[#FF69B4] text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          ]"
-        >
-          {{ period }}
-        </button>
-      </div>
+        <div class="mb-6 flex justify-between items-center">
+          <div class="flex gap-2">
+            <button
+              v-for="period in timePeriods"
+              :key="period"
+              @click="selectedPeriod = period"
+              :class="[
+                'px-4 py-2 rounded-lg font-medium transition-colors',
+                selectedPeriod === period
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ]"
+            >
+              {{ period }}
+            </button>
+          </div>
+          <button
+            @click="exportDashboard"
+            class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Exportar a PDF
+          </button>
+        </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Lo Más Vendido -->
@@ -104,7 +115,7 @@
               class="flex items-center justify-between p-2 hover:bg-gray-50 rounded"
             >
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-pink-200 to-purple-200 rounded flex items-center justify-center">
+                <div class="w-12 h-12 bg-linear-to-br from-pink-200 to-purple-200 rounded flex items-center justify-center">
                   <span class="text-xl">🍦</span>
                 </div>
                 <div>
@@ -130,6 +141,8 @@ import Header from '../components/Header.vue';
 import DonutChart from '../components/DonutChart.vue';
 import LineChart from '../components/LineChart.vue';
 import { useSalesStore } from '../store/sales';
+import type { Producto } from '@/types';
+import { exportDashboardToPDF } from '../utils/exportUtils';
 
 const salesStore = useSalesStore();
 
@@ -158,17 +171,26 @@ const dailySales = computed(() => {
   return salesStore.getDailySales(7);
 });
 
+// Helper para obtener el precio de un producto según su tipo
+function getProductPrice(product: Producto): number {
+  if (product.tipo === 'configurable') {
+    return product.precio_base_clp;
+  } else {
+    return product.precio_clp;
+  }
+}
+
 // Calcular productos más vendidos
 const bestRecipes = computed(() => {
-  const productCounts: Record<string, { name: string; price: number; count: number }> = {};
+  const productCounts: Record<string | number, { name: string; price: number; count: number }> = {};
   
   currentSales.value.forEach(sale => {
     sale.order.items?.forEach(item => {
       const productId = item.product.id;
       if (!productCounts[productId]) {
         productCounts[productId] = {
-          name: item.product.name,
-          price: item.product.price,
+          name: item.product.nombre,
+          price: getProductPrice(item.product),
           count: 0,
         };
       }
@@ -186,12 +208,12 @@ const bestRecipes = computed(() => {
 const salesByCategory = computed(() => {
   const cones = currentSales.value
     .flatMap(sale => sale.order.items || [])
-    .filter(item => item.product.category === 'cones')
+    .filter(item => item.product.categoria === 'conos')
     .reduce((sum, item) => sum + item.subtotal, 0);
   
   const cups = currentSales.value
     .flatMap(sale => sale.order.items || [])
-    .filter(item => item.product.category === 'cups')
+    .filter(item => item.product.categoria === 'copas')
     .reduce((sum, item) => sum + item.subtotal, 0);
   
   // Café helado (simulado)
@@ -202,5 +224,17 @@ const salesByCategory = computed(() => {
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('es-CL').format(Math.round(price));
+};
+
+// Exportar dashboard a PDF
+const exportDashboard = () => {
+  const period = periodMap[selectedPeriod.value] || 'year';
+  const sales = salesStore.getSalesByPeriod(period);
+  const dashboardData = {
+    totalRevenue: totalRevenue.value,
+    totalExpenses: totalExpenses.value,
+    totalSales: sales.length,
+  };
+  exportDashboardToPDF(dashboardData, `dashboard_${new Date().toISOString().split('T')[0]}.pdf`);
 };
 </script>

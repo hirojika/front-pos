@@ -10,6 +10,7 @@ export interface Sale {
   seller: string;
   paymentMethod: 'Efectivo' | 'Débito' | 'Crédito' | 'Transferencia';
   subtotal: number;
+  discount?: number;
   iva: number;
   total: number;
   status: 'Emitida' | 'Anulada';
@@ -72,21 +73,76 @@ export const useSalesStore = defineStore('sales', () => {
     },
   ]);
 
-  const addSale = (sale: Sale) => {
-    sales.value.unshift(sale);
+  const getNextSaleId = (): string => {
+    // Extraer el número más alto de los IDs existentes
+    const numbers = sales.value
+      .map(s => {
+        const match = s.id?.match(/VENTA-(\d+)/);
+        return match && match[1] ? parseInt(match[1], 10) : 0;
+      })
+      .filter(n => n > 0);
+
+    const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+    const nextNumber = maxNumber + 1;
+    
+    return `VENTA-${String(nextNumber).padStart(3, '0')}`;
   };
 
-  const deleteSale = (id: string) => {
-    const index = sales.value.findIndex(s => s.id === id);
-    if (index > -1) {
-      sales.value.splice(index, 1);
+  const addSale = (sale: Sale) => {
+    // Si el sale no tiene ID, generar uno automáticamente
+    if (!sale.id || sale.id === '') {
+      const nextId = getNextSaleId();
+      sale.id = nextId;
+      sale.orderId = nextId;
+    }
+    sales.value.unshift(sale);
+    
+    // Agregar notificación de nueva venta (solo si el store de notificaciones está disponible)
+    // Usar import dinámico de forma síncrona con try-catch
+    try {
+      // Importar el store de notificaciones de forma dinámica
+      import('./notifications').then(({ useNotificationsStore }) => {
+        const notificationsStore = useNotificationsStore();
+        notificationsStore.addNotification({
+          title: 'Nueva Venta Registrada',
+          message: `Venta ${sale.id} por $${sale.total.toLocaleString('es-CL')} - ${sale.paymentMethod}`,
+          type: 'success',
+        });
+      }).catch((error) => {
+        console.debug('Notifications store not available:', error);
+      });
+    } catch (error) {
+      console.debug('Error importing notifications store:', error);
     }
   };
+
+  // Función eliminada: No se permite eliminar boletas por temas con el SII en Chile
+  // Las boletas emitidas deben mantenerse en el sistema para cumplir con las regulaciones fiscales
+  // const deleteSale = (id: string) => {
+  //   const index = sales.value.findIndex(s => s.id === id);
+  //   if (index > -1) {
+  //     sales.value.splice(index, 1);
+  //   }
+  // };
 
   const getSales = computed(() => sales.value);
 
   const getSalesByStatus = (status: 'Emitida' | 'Anulada') => {
     return sales.value.filter(s => s.status === status);
+  };
+
+  // Anular una boleta (solo cambia el estado, no se elimina)
+  const voidSale = (id: string, reason?: string) => {
+    const sale = sales.value.find(s => s.id === id);
+    if (sale && sale.status === 'Emitida') {
+      sale.status = 'Anulada';
+      // Opcional: guardar razón de anulación si se necesita
+      if (reason) {
+        (sale as any).voidReason = reason;
+      }
+      return true;
+    }
+    return false;
   };
 
   // Estadísticas calculadas
@@ -151,13 +207,15 @@ export const useSalesStore = defineStore('sales', () => {
   return {
     sales,
     addSale,
-    deleteSale,
+    // deleteSale removido - no se permite eliminar boletas por temas con el SII
+    voidSale,
     getSales,
     getSalesByStatus,
     totalRevenue,
     totalExpenses,
     getSalesByPeriod,
     getDailySales,
+    getNextSaleId,
   };
 });
 

@@ -60,6 +60,19 @@ const routes: RouteRecordRaw[] = [
                 component: () => import('../views/IngredientesView.vue')
             }
         ]
+    },
+    {
+        path: '/configuracion',
+        name: 'Configuracion',
+        component: () => import('../layouts/MainLayout.vue'),
+        meta: { requiresAuth: true },
+        children: [
+            {
+                path: '',
+                name: 'ConfiguracionView',
+                component: () => import('../views/ConfiguracionView.vue')
+            }
+        ]
     }
 ];
 
@@ -69,16 +82,28 @@ const router = createRouter({
 });
 
 // Guard de navegación
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
     const authStore = useAuthStore();
     
-    if (to.meta.requiresAuth !== false && !authStore.isAuthenticated) {
-        next({ name: 'Login' });
-    } else if (to.name === 'Login' && authStore.isAuthenticated) {
+    // Verificar autenticación en cada navegación para asegurar que el estado esté actualizado
+    authStore.checkAuth();
+    
+    // Obtener el estado de autenticación actual (después de checkAuth)
+    const isAuthenticated = authStore.isAuthenticated;
+    
+    // Si el usuario está autenticado y va a la página de login o a la raíz, redirigir al dashboard
+    if ((to.name === 'Login' || to.path === '/') && isAuthenticated) {
         next({ name: 'Dashboard' });
-    } else {
-        next();
+        return;
     }
+    
+    // Si la ruta requiere autenticación y el usuario no está autenticado, redirigir al login
+    if (to.meta.requiresAuth !== false && !isAuthenticated) {
+        next({ name: 'Login' });
+        return;
+    }
+    
+    next();
 });
 
 export default router;
